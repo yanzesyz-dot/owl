@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090c12">
+<title>小困 · QDII无限滚动收益预测 6.0</title>
+<style>
+:root{--bg:#080b11;--card:#151a23;--card2:#1d2430;--line:#2e3745;--text:#f7f8fb;--muted:#97a0ad;--orange:#ff6900;--green:#35d57d;--red:#ff5c68;--yellow:#f0bd4e;--blue:#6aaeff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07090d,#111722);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:900px;margin:auto;padding:16px 14px 50px}.top{display:flex;justify-content:space-between;gap:12px}.top h1{font-size:24px;margin:3px 0;font-weight:900}.sub,.note,.small{color:var(--muted);font-size:12px;line-height:1.7}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}.hero{background:linear-gradient(140deg,#1b222e,#141923)}.warn{background:rgba(240,189,78,.07);border-color:rgba(240,189,78,.3)}.ok{background:rgba(53,213,125,.06);border-color:rgba(53,213,125,.22)}
+.badge{display:inline-flex;background:#242c37;padding:6px 9px;border-radius:99px;font-size:12px}.dot{width:7px;height:7px;background:var(--green);border-radius:50%;margin:4px 7px 0 0}
+h2{font-size:17px;margin:0 0 10px}.big{font-size:34px;font-weight:950;margin:3px 0}.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.blue{color:var(--blue)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:var(--card2);border-radius:13px;padding:12px}.k{font-size:12px;color:var(--muted)}.v{font-size:20px;font-weight:900;margin-top:5px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.name{font-weight:800}.right{text-align:right;font-weight:900}
+input,select{width:100%;background:#0e1218;border:1px solid #394351;color:#fff;border-radius:10px;padding:10px;font-size:15px}label{display:block;color:var(--muted);font-size:12px;margin:9px 0 6px}
+button{border:0;border-radius:12px;background:var(--orange);color:white;font-weight:850;padding:11px 14px;font-size:14px}.secondary{background:#2a313d}.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1}
+.step{display:flex;gap:12px;background:#11161f;border-radius:12px;padding:12px;margin-top:8px}.num{width:28px;height:28px;flex:none;border-radius:50%;background:#272f3a;display:flex;align-items:center;justify-content:center;font-weight:900}
+.timeline{display:grid;gap:8px}.daycard{background:#11161f;border:1px solid var(--line);border-radius:13px;padding:12px}.dayhead{display:flex;justify-content:space-between;gap:8px;align-items:center}.tag{font-size:11px;border-radius:999px;padding:4px 8px;background:#252d39}.tag.confirm{color:var(--green)}.tag.predict{color:var(--yellow)}.tag.wait{color:var(--blue)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:right;padding:9px 5px;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:700}
+@media(max-width:560px){.grid{grid-template-columns:1fr 1fr}.big{font-size:31px}.top h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="top">
+  <div>
+    <h1>📈 小困 · QDII无限滚动收益预测 6.0</h1>
+    <div class="sub"><b>不是“三天工具”，而是持续滚动账本</b> · 已确认 → 当前待确认 → 下一交易日 → 再下一交易日……</div>
+  </div>
+  <button onclick="refreshAll()">刷新</button>
+</div>
+
+<div id="statusCard" class="card hero">
+  <div class="badge"><span class="dot"></span><span id="status">正在读取…</span></div>
+  <div id="statusDetail" class="sub" style="margin-top:8px"></div>
+</div>
+
+<div class="card ok">
+  <h2>① 最新已确认：只显示事实</h2>
+  <div class="grid">
+    <div class="metric"><div class="k">南方纳斯达克100 QDII · 最新NAV</div><div id="navN" class="v">—</div></div>
+    <div class="metric"><div class="k">摩根标普500 QDII · 最新NAV</div><div id="navS" class="v">—</div></div>
+  </div>
+  <div class="row"><div><div class="name">最新官方净值日期</div><div id="officialDate" class="small">—</div></div><div id="officialState" class="right">已确认</div></div>
+  <div class="row"><div><div class="name">最新官方日涨跌</div><div id="officialChange" class="small">—</div></div><div class="right">不再预测</div></div>
+</div>
+
+<div class="card">
+  <h2>② 当前待确认：今天</h2>
+  <div id="currentPnl" class="big">—</div>
+  <div id="currentExplain" class="sub">这里永远只放“最新官方NAV之后，已经收盘但尚未由国内QDII确认”的最近一晚。</div>
+  <div class="grid" style="margin-top:12px">
+    <div class="metric"><div class="k">纳斯达克100 QDII</div><div id="currentN" class="v">—</div></div>
+    <div class="metric"><div class="k">标普500 QDII</div><div id="currentS" class="v">—</div></div>
+  </div>
+  <div class="note" style="margin-top:10px">这就是你现在最关心的“昨晚美股已经收盘 → 今天国内QDII还没公布”的预测。今晚官方NAV出来后，它会自动变成“已确认”，然后这一框自动滚到下一天。</div>
+</div>
+
+<div class="card">
+  <h2>③ 下一交易日：等待新的美股收盘</h2>
+  <div id="nextPnl" class="big blue">等待数据</div>
+  <div id="nextExplain" class="sub">今晚新的美股收盘出现后，这里会自动填入下一交易日的预测；周末、节假日自动跳过，不会硬造一个“明天”。</div>
+  <div class="grid" style="margin-top:12px">
+    <div class="metric"><div class="k">纳斯达克100 QDII</div><div id="nextN" class="v">—</div></div>
+    <div class="metric"><div class="k">标普500 QDII</div><div id="nextS" class="v">—</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>④ 无限滚动预测队列</h2>
+  <div class="note" style="margin-bottom:10px">页面不会限制在三天。它会从最新官方NAV往后扫描市场数据：已经发生且有收盘数据的交易日可以形成预测；未来尚未收盘的交易日显示为“等待”。官方NAV一更新，队列整体向前滚动。</div>
+  <div id="timeline" class="timeline"></div>
+</div>
+
+<div class="card">
+  <h2>⑤ 今日真实持仓</h2>
+  <div class="grid">
+    <div class="metric"><div class="k">纳指确认份额</div><div id="sharesN" class="v">—</div></div>
+    <div class="metric"><div class="k">标普确认份额</div><div id="sharesS" class="v">—</div></div>
+    <div class="metric"><div class="k">纳指确认资产</div><div id="assetN" class="v">—</div></div>
+    <div class="metric"><div class="k">标普确认资产</div><div id="assetS" class="v">—</div></div>
+  </div>
+  <div class="row"><div><div class="name">今日待确认定投</div><div class="small">已投入，不算今天利润；官方NAV公布后转成份额</div></div><div class="right">¥20.00</div></div>
+  <div class="row"><div><div class="name">当前确认总资产</div></div><div id="totalConfirmed" class="right">—</div></div>
+</div>
+
+<div class="card">
+  <h2>⑥ 最近美股行情</h2>
+  <div class="row"><div><div class="name">纳斯达克100指数</div><div id="ndxDate" class="small">—</div></div><div id="ndxRet" class="right">—</div></div>
+  <div class="row"><div><div class="name">标普500指数</div><div id="spDate" class="small">—</div></div><div id="spRet" class="right">—</div></div>
+  <div class="row"><div><div class="name">USD/CNY</div><div id="fxDate" class="small">—</div></div><div id="fxRet" class="right">—</div></div>
+</div>
+
+<div class="card">
+  <h2>⑦ 数据源选择</h2>
+  <div class="grid">
+    <div class="metric"><div class="k">行情数据源</div><select id="sourceMode" onchange="saveSourceMode()"><option value="domestic">🇨🇳 国内：东方财富</option><option value="foreign">🌍 国外：Yahoo Finance</option></select></div>
+    <div class="metric"><div class="k">QDII官方NAV</div><div class="v" style="font-size:15px">东方财富历史净值</div></div>
+  </div>
+  <div class="note" style="margin-top:10px">行情只使用纳斯达克100指数、标普500指数和USD/CNY。基金最终修正使用官方历史NAV。</div>
+</div>
+
+<div class="card">
+  <h2>⑧ 定投状态（自动）</h2>
+  <div class="grid">
+    <div class="metric"><div class="k">纳指每交易日</div><div class="v">¥10</div></div>
+    <div class="metric"><div class="k">标普每交易日</div><div class="v">¥10</div></div>
+    <div class="metric"><div class="k">当前待确认</div><div id="pendingTotal" class="v">¥20</div></div>
+    <div class="metric"><div class="k">今日是否已生成</div><div id="todayAdded" class="v">—</div></div>
+  </div>
+  <div class="note" style="margin-top:10px">
+    系统每天会自动判断今天是不是可定投的基金交易日。若是且当天尚未生成，就自动产生一次 <b>¥10 + ¥10 = ¥20</b> 待确认定投；
+    若今天已经生成过，则不会重复加入。官方NAV公布后，这一笔会自动按实际NAV转换成份额并保存。
+  </div>
+</div>
+
+<div class="card">
+  <h2>⑨ 你要的时间轴</h2>
+  <div class="step"><div class="num">1</div><div><b>官方NAV已确认</b><div class="small">永远作为真实基准。</div></div></div>
+  <div class="step"><div class="num">2</div><div><b>美股已收盘但QDII未公布</b><div class="small">成为“当前待确认”，预测今天。</div></div></div>
+  <div class="step"><div class="num">3</div><div><b>国内QDII公布</b><div class="small">自动用实际NAV覆盖预测，并把当天¥20转为新份额。</div></div></div>
+  <div class="step"><div class="num">4</div><div><b>下一晚美股收盘</b><div class="small">下一交易日自动进入“当前待确认”。</div></div></div>
+  <div class="step"><div class="num">5</div><div><b>无限重复</b><div class="small">后天、大后天、下周、下个月……都沿用同一逻辑。</div></div></div>
+</div>
+
+<div class="card">
+  <h2>⑩ 自动流水记录</h2>
+  <div class="table-wrap"><table><thead><tr><th>日期</th><th>事件</th><th>纳指</th><th>标普</th><th>状态</th></tr></thead><tbody id="logBody"></tbody></table></div>
+  <div class="note" style="margin-top:10px">记录保存在浏览器 localStorage。关闭网页、重新打开或电脑重启后仍会保留。</div>
+</div>
+
+<div class="card warn">
+  <div class="note"><b>重要：</b>这个页面是“无限滚动”的。它会自动识别新的基金交易日、生成每日定投、等待官方NAV确认、把待确认金额换成份额，并继续滚动下一晚的美股预测。周末和没有基金NAV记录的日期不会重复生成定投。</div>
+</div>
+
+<script>
+const KEY="xiaokun_qdii_v7";
+const DEFAULT={
+  officialDate:"2026-08-11",
+  nShares:229.02,
+  sShares:250.12,
+  nNav:2.2950,
+  sNav:1.7166,
+  pendingN:10,
+  pendingS:10,
+  pendingDate:"2026-08-13",
+  sourceMode:"domestic",
+  logs:[
+    {date:"2026-08-12",event:"昨日定投已确认（历史初始状态）",n:10,s:10,status:"已确认"},
+    {date:"2026-08-13",event:"今日定投已投入（历史初始状态）",n:10,s:10,status:"待确认"}
+  ]
+};
+
+let S=loadState(), M={N:[],SP:[],FX:[]}, NAV={N:[],SP:[]};
+
+function loadState(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(KEY)||"{}");
+    return {...DEFAULT,...saved,logs:Array.isArray(saved.logs)?saved.logs:DEFAULT.logs};
+  }catch(e){return structuredClone(DEFAULT)}
+}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(S))}
+function set(id,v){const el=document.getElementById(id); if(el)el.textContent=v}
+function money(x){return (x>=0?"+":"-")+"¥"+Math.abs(x).toFixed(2)}
+function pct(x){return (x*100).toFixed(2)+"%"}
+function paint(el,x){if(!el)return;el.classList.remove("green","red");el.classList.add(x>=0?"green":"red")}
+function fmtDate(t){return new Date(t).toLocaleDateString("zh-CN",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit",weekday:"short"})}
+function fmtDateTime(t){return new Date(t).toLocaleString("zh-CN",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})}
+function beijingDate(){
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+}
+function startOfDay(s){let [y,m,d]=s.split("-").map(Number);return Date.UTC(y,m-1,d)}
+function addDays(s,n){
+  let d=new Date(startOfDay(s)); d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10)
+}
+function eastK(secid){
+  return "https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&beg=20260101&end=20300101&ut=fa5fd1943c7b386f172d6893dbfba10b&rtntype=6&secid="+secid+"&klt=101&fqt=0";
+}
+async function getJSON(u){
+  const r=await fetch(u,{cache:"no-store"});
+  if(!r.ok)throw Error("HTTP "+r.status);
+  return r.json();
+}
+function parseK(j){
+  return (j?.data?.klines||[]).map(s=>{
+    const a=s.split(",");
+    return {t:new Date(a[0]+"T00:00:00+08:00").getTime(),c:+a[2]};
+  }).filter(x=>Number.isFinite(x.c));
+}
+async function fundHistory(code){
+  const u="https://api.fund.eastmoney.com/f10/lsjz?fundCode="+code+"&pageIndex=1&pageSize=100";
+  const r=await fetch(u,{cache:"no-store",headers:{Referer:"https://fund.eastmoney.com/"}});
+  if(!r.ok)throw Error("基金HTTP "+r.status);
+  const j=await r.json();
+  return (j?.Data?.LSJZList||[]).map(x=>({date:x.FSRQ,nav:+x.DWJZ,chg:x.JZZZL}))
+   .filter(x=>Number.isFinite(x.nav));
+}
+async function yahoo(sym){
+  const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(sym)+"?range=6mo&interval=1d&includePrePost=false";
+  const r=await fetch(u,{cache:"no-store"});if(!r.ok)throw Error("Yahoo HTTP "+r.status);
+  const j=await r.json(),z=j?.chart?.result?.[0];if(!z)throw Error("Yahoo空数据");
+  return (z.timestamp||[]).map((t,i)=>({t:t*1000,c:+z.indicators.quote[0].close[i]}))
+    .filter(x=>Number.isFinite(x.c));
+}
+async function loadMarkets(){
+  let e=[];
+  if(S.sourceMode==="domestic"){
+    try{M.N=parseK(await getJSON(eastK("100.NDX100")))}catch(x){e.push("东方财富纳斯达克100指数失败")}
+    try{M.SP=parseK(await getJSON(eastK("100.SPX")))}catch(x){e.push("东方财富标普500指数失败")}
+    try{M.FX=parseK(await getJSON(eastK("133.USDCNH")))}catch(x){e.push("东方财富美元兑人民币失败")}
+  }else{
+    try{M.N=await yahoo("^NDX")}catch(x){e.push("Yahoo纳斯达克100指数失败")}
+    try{M.SP=await yahoo("^GSPC")}catch(x){e.push("Yahoo标普500指数失败")}
+    try{M.FX=await yahoo("USDCNY=X")}catch(x){e.push("Yahoo美元兑人民币失败")}
+  }
+  return e;
+}
+
+function latestOfficial(){
+  const common=[...new Set(NAV.N.map(x=>x.date).filter(d=>NAV.SP.some(y=>y.date===d)))].sort();
+  const d=common.at(-1)||S.officialDate;
+  const n=NAV.N.find(x=>x.date===d),s=NAV.SP.find(x=>x.date===d);
+  return {date:d,n:n?.nav||S.nNav,s:s?.nav||S.sNav,nchg:n?.chg,schg:s?.chg};
+}
+function pushLog(entry){
+  if(!S.logs.some(x=>x.date===entry.date&&x.event===entry.event)){
+    S.logs.push(entry);
+    S.logs=S.logs.slice(-50);
+  }
+}
+function isWeekday(dateStr){
+  const d=new Date(startOfDay(dateStr));
+  const wd=d.getUTCDay();
+  return wd!==0&&wd!==6;
+}
+function fundTradingDates(){
+  // 历史NAV日期是最可靠的“基金实际交易/确认日”来源。
+  return new Set([...NAV.N.map(x=>x.date),...NAV.SP.map(x=>x.date)]);
+}
+function nextFundTradingDateAfter(dateStr){
+  const dates=[...fundTradingDates()].filter(d=>d>dateStr).sort();
+  return dates[0]||null;
+}
+function ensureTodayPending(){
+  const today=beijingDate();
+  if(!isWeekday(today)) return false;
+
+  // 如果今天已经有pending，绝不重复。
+  if(S.pendingDate===today) return false;
+
+  // 如果今天已经被历史日志记录过，也不重复。
+  if(S.logs.some(x=>x.date===today&&x.event.includes("定投"))) return false;
+
+  // 已经到了新的工作日：自动创建今天20元待确认。
+  S.pendingN=10; S.pendingS=10; S.pendingDate=today;
+  pushLog({date:today,event:"自动生成今日定投",n:10,s:10,status:"待确认"});
+  saveState();
+  return true;
+}
+
+function reconcileOfficial(){
+  const newest=latestOfficial();
+  if(newest.date<=S.officialDate)return false;
+
+  // 从确认份额开始，逐个新官方确认日推进。
+  const common=[...new Set(NAV.N.map(x=>x.date).filter(d=>NAV.SP.some(y=>y.date===d)&&d>S.officialDate))].sort();
+  if(!common.length)return false;
+
+  let changed=false;
+  for(const d of common){
+    const n=NAV.N.find(x=>x.date===d), s=NAV.SP.find(x=>x.date===d);
+    if(!n||!s)continue;
+
+    // 先用新NAV重估旧份额
+    const oldNAsset=S.nShares*S.nNav;
+    const oldSAsset=S.sShares*S.sNav;
+
+    // 新NAV下旧份额的市值
+    const newNAsset=(oldNAsset/S.nNav)*n.nav;
+    const newSAsset=(oldSAsset/S.sNav)*s.nav;
+
+    // 只有这一笔日期对应的 pending 定投才转成份额。
+    if(S.pendingDate && S.pendingDate<=d){
+      S.nShares = newNAsset/n.nav + S.pendingN/n.nav;
+      S.sShares = newSAsset/s.nav + S.pendingS/s.nav;
+      pushLog({date:d,event:"官方NAV确认并结转待定投",n:S.pendingN,s:S.pendingS,status:"已确认"});
+      S.pendingN=10; S.pendingS=10;
+      S.pendingDate=addDays(d,1);
+    }else{
+      S.nShares = newNAsset/n.nav;
+      S.sShares = newSAsset/s.nav;
+      pushLog({date:d,event:"官方NAV确认并修正",n:0,s:0,status:"已确认"});
+    }
+    S.nNav=n.nav; S.sNav=s.nav; S.officialDate=d;
+    changed=true;
+  }
+  if(changed)saveState();
+  return changed;
+}
+
+function prev(arr,t){let p=null;for(const x of arr)if(x.t<t)p=x;return p}
+function firstAfter(arr,date){return arr.find(x=>x.t>startOfDay(date))}
+function ret(arr,x){let p=prev(arr,x.t);return p?x.c/p.c-1:null}
+function qret(i,fx){return (1+i)*(1+(fx||0))-1}
+
+function predictedSession(fromDate){
+  const n=firstAfter(M.N,fromDate),s=firstAfter(M.SP,fromDate);
+  if(!n||!s)return null;
+  const f=M.FX.find(x=>x.t>=n.t);
+  return {
+    date:fmtDate(n.t),iso:new Date(n.t).toLocaleDateString("en-CA",{timeZone:"Asia/Shanghai"}),
+    t:n.t,nr:ret(M.N,n),sr:ret(M.SP,s),fr:f?ret(M.FX,f):0
+  };
+}
+function buildSessions(limit=15){
+  const out=[];let cursor=S.officialDate;
+  for(let i=0;i<limit;i++){
+    const x=predictedSession(cursor); if(!x)break;
+    out.push(x);cursor=x.iso;
+  }
+  return out;
+}
+function renderTimeline(sessions,O){
+  const box=document.getElementById("timeline");box.innerHTML="";
+  if(!sessions.length){box.innerHTML='<div class="daycard"><b>等待新的美股交易日</b><div class="small">数据源还没有更晚的收盘记录。</div></div>';return}
+  sessions.forEach((x,i)=>{
+    const qn=qret(x.nr,x.fr),qs=qret(x.sr,x.fr);
+    const gn=S.nShares*O.n*qn,gs=S.sShares*O.s*qs,total=gn+gs;
+    const d=document.createElement("div");d.className="daycard";
+    d.innerHTML='<div class="dayhead"><b>'+x.date+'</b><span class="tag '+(i===0?'predict':'wait')+'">'+(i===0?'当前待确认':'未来队列')+'</span></div>'+
+      '<div class="small" style="margin-top:5px">纳指100 '+pct(qn)+' · 标普500 '+pct(qs)+' · USD/CNY '+pct(x.fr)+'</div>'+
+      '<div style="margin-top:7px;font-size:18px;font-weight:900" class="'+(total>=0?'green':'red')+'">'+money(total)+'</div>'+
+      '<div class="small">纳指 '+money(gn)+' · 标普 '+money(gs)+'</div>';
+    box.appendChild(d);
+  });
+}
+function renderLog(){
+  const body=document.getElementById("logBody"); if(!body)return;
+  body.innerHTML="";
+  [...S.logs].reverse().forEach(x=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML='<td>'+x.date+'</td><td>'+x.event+'</td><td>¥'+Number(x.n||0).toFixed(2)+'</td><td>¥'+Number(x.s||0).toFixed(2)+'</td><td>'+x.status+'</td>';
+    body.appendChild(tr);
+  });
+}
+
+function render(errors){
+  const O=latestOfficial();
+  set("navN",O.n.toFixed(4));set("navS",O.s.toFixed(4));set("officialDate",O.date);
+  set("officialChange",(O.nchg?("纳指 "+O.nchg):"纳指—")+" / "+(O.schg?("标普 "+O.schg):"标普—"));
+
+  const sessions=buildSessions(15), current=sessions[0], next=sessions[1];
+
+  if(current){
+    const qn=qret(current.nr,current.fr),qs=qret(current.sr,current.fr);
+    const gn=S.nShares*O.n*qn,gs=S.sShares*O.s*qs,total=gn+gs;
+    set("currentPnl",money(total));paint(currentPnl,total);
+    set("currentN",money(gn));paint(currentN,gn);set("currentS",money(gs));paint(currentS,gs);
+    set("currentExplain","基准官方NAV "+O.date+" → 美股 "+current.date+" 已收盘；纳指100 "+pct(qn)+" / 标普500 "+pct(qs));
+  }else{
+    set("currentPnl","等待美股收盘");set("currentN","—");set("currentS","—");
+  }
+
+  if(next){
+    const qn=qret(next.nr,next.fr),qs=qret(next.sr,next.fr),gn=S.nShares*O.n*qn,gs=S.sShares*O.s*qs,total=gn+gs;
+    set("nextPnl",money(total));paint(nextPnl,total);
+    set("nextN",money(gn));paint(nextN,gn);set("nextS",money(gs));paint(nextS,gs);
+    set("nextExplain","下一段已收盘数据："+next.date+"；后续还会继续滚动。");
+  }else{
+    set("nextPnl","等待新的美股收盘");set("nextN","—");set("nextS","—");
+    set("nextExplain","今晚新的美股收盘数据出现后自动进入队列。");
+  }
+
+  renderTimeline(sessions,O);renderLog();
+
+  const aN=S.nShares*O.n,aS=S.sShares*O.s;
+  set("assetN","¥"+aN.toFixed(2));set("assetS","¥"+aS.toFixed(2));
+  set("sharesN",S.nShares.toFixed(4));set("sharesS",S.sShares.toFixed(4));
+  set("totalConfirmed","¥"+(aN+aS).toFixed(2));
+
+  set("pendingTotal","¥"+(S.pendingN+S.pendingS).toFixed(2));
+  set("todayAdded",(S.pendingDate===beijingDate()||S.logs.some(x=>x.date===beijingDate()&&x.event.includes("定投")))?"是":"否");
+
+  if(M.N.length>1){let a=M.N.at(-1),b=M.N.at(-2),r=a.c/b.c-1;set("ndxDate",fmtDateTime(a.t));set("ndxRet",pct(r));paint(ndxRet,r)}
+  if(M.SP.length>1){let a=M.SP.at(-1),b=M.SP.at(-2),r=a.c/b.c-1;set("spDate",fmtDateTime(a.t));set("spRet",pct(r));paint(spRet,r)}
+  if(M.FX.length>1){let a=M.FX.at(-1),b=M.FX.at(-2),r=a.c/b.c-1;set("fxDate",fmtDateTime(a.t));set("fxRet",pct(r));paint(fxRet,r)}
+
+  document.getElementById("sourceMode").value=S.sourceMode;
+
+  document.getElementById("statusCard").className="card "+(errors.length?"warn":"hero");
+  set("status",errors.length?(S.sourceMode==="domestic"?"国内东方财富部分失败":"国外Yahoo Finance部分失败"):(S.sourceMode==="domestic"?"国内东方财富已同步":"国外Yahoo Finance已同步"));
+  set("statusDetail",(errors.length?errors.join("；")+"。":"")+" 最新官方NAV："+O.date+" · 当前待确认定投："+S.pendingDate+" ¥"+(S.pendingN+S.pendingS).toFixed(2)+" · 每5分钟自动刷新。");
+}
+
+async function refreshAll(){
+  set("status","正在同步市场、基金NAV与定投状态…");
+  let errors=[];
+  try{NAV.N=await fundHistory("016452")}catch(e){errors.push("纳指基金NAV")}
+  try{NAV.SP=await fundHistory("017641")}catch(e){errors.push("标普基金NAV")}
+  errors=errors.concat(await loadMarkets());
+
+  // 先把已经发生的官方确认同步进来。
+  const moved=reconcileOfficial();
+
+  // 再生成今天新的待确认定投，避免把已经确认的旧20元再次加入。
+  const generated=ensureTodayPending();
+
+  render(errors);
+
+  if(moved) set("statusDetail","发现新的官方QDII净值：旧预测已自动结束，待确认定投已按官方NAV转成份额并保存。");
+  if(generated) set("statusDetail","检测到新的基金交易日：已自动生成今日 ¥10 + ¥10 定投，等待官方NAV确认。");
+}
+
+function saveSourceMode(){S.sourceMode=document.getElementById("sourceMode").value;saveState();refreshAll()}
+refreshAll();
+setInterval(refreshAll,300000);
+</script>
+</body>
+</html>
